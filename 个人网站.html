@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>曲旭航 | 个人控制台</title>
+    <style>
+        :root {
+            /* 亮色模式变量 */
+            --bg-main: #fefcf5;
+            --bg-nav: #f9f6ee;
+            --bg-block: #eaeae1;
+            --bg-card: #ffffff; 
+            --bg-placeholder: #e6e6df; /* PPT占位图颜色 */
+            --text-primary: #000000;
+            --text-secondary: #4a4a4a;
+            --text-placeholder: #999999;
+            --text-on-block: #000000; 
+            --accent-claude: #d97757; 
+            --border: rgba(0, 0, 0, 0.06);
+            --transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            --radius: 28px;
+        }
+
+        [data-theme="dark"] {
+            /* 夜间模式变量 */
+            --bg-main: #1a1919;      
+            --bg-nav: #2d2b2b;       
+            --bg-block: #e6e6e6;   
+            --bg-card: #242422; 
+            --bg-placeholder: #2f2f2d; 
+            --text-primary: #ffffff;  
+            --text-secondary: #a0a0a0;
+            --text-placeholder: #666666;
+            --text-on-block: #000000; 
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- 侧边栏 --- */
+        .sidebar {
+            width: 240px;
+            background-color: var(--bg-nav);
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            border-right: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .brand-logo {
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border); /* 添加底部分割线 */
+            width: 100%;
+        }
+
+        .brand-logo::before {
+            content: '';
+            width: 16px;
+            height: 16px;
+            background: var(--accent-claude); 
+            margin-right: 12px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(217, 119, 87, 0.3);
+        }
+
+        .nav-item {
+            list-style: none;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 14px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: flex; 
+            align-items: center;
+            gap: 0.8rem; 
+        }
+
+        .nav-item svg { opacity: 0.6; transition: var(--transition); }
+        .nav-item.active { background-color: var(--bg-block); color: var(--text-on-block); font-weight: 600; }
+        .nav-item.active svg, .nav-item:hover svg { opacity: 1; }
+
+        /* --- 主画布 --- */
+        .main-canvas {
+            margin-left: 240px;
+            flex-grow: 1;
+            padding: 2.5rem 4vw 2.5rem 4vw; 
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* 顶部工具栏 */
+        .top-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start; 
+            margin-bottom: 2.5rem; 
+            width: 100%;
+        }
+
+        .breadcrumb-area { display: flex; flex-direction: column; }
+        .breadcrumb { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); opacity: 0.8; margin-bottom: 6px; }
+        .page-title { font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; line-height: 1; padding-bottom: 2px; display: inline-block; transition: all 0.3s ease;}
+
+        .theme-toggle {
+            width: 44px;
+            height: 44px;
+            background-color: var(--bg-nav);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-top: 8px; 
+        }
+
+        /* --- 视图切换控制 --- */
+        .view-section { display: none; animation: fadeIn 0.4s ease; }
+        .view-section.active-view { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-wrapper {
+            max-width: 960px; 
+            width: 100%;
+            margin-left: 60px; 
+            flex-direction: column;
+            gap: 1.5rem; 
+        }
+
+        /* =========================================
+           视图 1: Overview (概览) 
+           ========================================= */
+        .identity-panel { background-color: var(--bg-block); color: var(--text-on-block); border-radius: var(--radius); padding: 3rem; display: flex; flex-direction: column; gap: 1.8rem; transition: background-color 0.3s ease; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+        .name-section { position: relative; display: inline-block; }
+        .name-section h1 { font-size: 4.2rem; font-weight: 950; line-height: 1; letter-spacing: -3px; position: relative; z-index: 5; display: inline-block; }
+        
+        .avatar-box { width: 130px; height: 130px; background-color: rgba(0,0,0,0.05); border: 3px solid var(--accent-claude); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px; position: relative; z-index: 5; }
+        .avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; color: transparent; }
+
+        .aphorism-area { min-height: 2.5rem; display: flex; align-items: center; }
+        .typewriter { font-size: 1.4rem; font-weight: 600; color: #000; border-right: 3px solid #000; animation: caret 0.8s infinite; line-height: 1.4; }
+        .bio-text { font-size: 1.1rem; color: #333; line-height: 1.7; max-width: 90%; }
+        
+        .contact-panel { background-color: var(--bg-nav); border-radius: var(--radius); padding: 2.5rem 0; display: flex; flex-direction: column; gap: 1.5rem; transition: background-color 0.3s ease; }
+        .contact-header { display: flex; align-items: center; padding-left: 2rem; }
+        .contact-header h3 { font-size: 1.3rem; font-weight: 900; letter-spacing: 0.5px; color: var(--text-primary); text-transform: uppercase; }
+        .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 0 2rem; }
+        .contact-item { display: flex; flex-direction: column; gap: 0.4rem; }
+        .label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; color: var(--text-secondary); }
+        .value { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+
+
+        /* =========================================
+           视图 2: AI Projects (AI 作品集)
+           ========================================= */
+        .series-section { margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .series-label { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem; }
+        .series-label svg { color: var(--accent-claude); }
+        .project-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+
+        .project-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            min-height: 180px;
+        }
+
+        .project-card:hover { transform: translateY(-6px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); }
+        [data-theme="dark"] .project-card:hover { border-color: rgba(255,255,255,0.2); }
+
+        .card-title { font-size: 1.35rem; font-weight: 900; color: var(--text-primary); z-index: 2; display: inline-block; line-height: 1; padding-bottom: 2px; }
+        .card-desc { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; flex-grow: 1; max-width: 90%; z-index: 2; }
+
+        .try-btn {
+            align-self: flex-end;
+            background-color: var(--text-primary); 
+            color: var(--bg-main); 
+            border: none;
+            border-radius: 20px;
+            padding: 0.45rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: var(--transition);
+            z-index: 2;
+            margin-top: 1rem;
+        }
+
+        .try-btn:hover { opacity: 0.85; transform: scale(1.05); }
+        .card-watermark { position: absolute; right: -10%; bottom: -15%; width: 140px; height: 140px; opacity: 0.03; color: var(--text-primary); pointer-events: none; z-index: 1; }
+
+        /* =========================================
+           视图 3: PPT Works (PPT作品集 - 网格展示)
+           ========================================= */
+        .ppt-section-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .ppt-section-title .dot { width: 8px; height: 8px; background-color: var(--accent-claude); border-radius: 50%; }
+
+        .ppt-featured-card { display: flex; background-color: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: var(--transition); }
+        .ppt-featured-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); }
+
+        .ppt-image-placeholder { 
+            background-color: var(--bg-placeholder); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            color: var(--text-placeholder); 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            gap: 8px; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        
+        .ppt-image-placeholder img.real-ppt-img { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+            z-index: 2; 
+            display: block; 
+            transition: transform 0.5s ease; 
+        }
+        .ppt-featured-card:hover .real-ppt-img, .ppt-card:hover .real-ppt-img { transform: scale(1.03); } 
+
+        .ppt-featured-card .ppt-image-placeholder { width: 50%; aspect-ratio: 16 / 9; height: auto; }
+        .ppt-info { padding: 2.5rem; display: flex; flex-direction: column; flex-grow: 1; width: 50%; justify-content: center; }
+        .ppt-badge { font-size: 0.7rem; background-color: rgba(217, 119, 87, 0.1); color: var(--accent-claude); padding: 4px 10px; border-radius: 6px; font-weight: 800; align-self: flex-start; margin-bottom: 1rem; }
+        
+        .ppt-info h3 { font-size: 1.6rem; font-weight: 900; line-height: 1.3; margin-bottom: 2rem; color: var(--text-primary); }
+        .ppt-meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .ppt-tag { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; opacity: 0.8; }
+        
+        .ppt-btn { background-color: transparent; color: var(--text-primary); border: 1px solid var(--border); border-radius: 12px; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: var(--transition); }
+        .ppt-btn:hover { background-color: var(--bg-nav); border-color: var(--text-secondary); }
+
+        .ppt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .ppt-card { display: flex; flex-direction: column; background-color: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: var(--transition); }
+        .ppt-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); }
+        
+        .ppt-card .ppt-image-placeholder { width: 100%; aspect-ratio: 16 / 9; height: auto; }
+        .ppt-card .ppt-info { padding: 1.5rem; width: 100%; gap: 0; justify-content: flex-start; }
+        .ppt-card h4 { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin-bottom: auto; padding-bottom: 1.5rem; }
+
+
+        /* =========================================
+           视图 4: PPT 详情展示页 (沉浸式画廊)
+           ========================================= */
+        .back-nav {
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+        .back-nav:hover { color: var(--accent-claude); transform: translateX(-4px); }
+
+        .ppt-detail-block {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+            margin-bottom: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative; 
+        }
+
+        .detail-block-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        /* Cover Flow 3D 容器 */
+        .slider-viewport {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            perspective: 1200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .slider-slide {
+            position: absolute;
+            width: 65%;
+            aspect-ratio: 16 / 9;
+            height: auto;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            background-color: var(--bg-placeholder);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            color: var(--text-placeholder);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .slider-slide img.real-ppt-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+            z-index: 2;
+            display: block;
+        }
+
+        /* 3D 核心景深排布 */
+        .slider-slide.active { transform: translateX(0) scale(1) translateZ(0); z-index: 10; opacity: 1; }
+        .slider-slide.prev { transform: translateX(-55%) scale(0.85) translateZ(-100px); z-index: 5; opacity: 0.5; filter: brightness(0.6); }
+        .slider-slide.next { transform: translateX(55%) scale(0.85) translateZ(-100px); z-index: 5; opacity: 0.5; filter: brightness(0.6); }
+        .slider-slide.hidden { transform: translateX(0) scale(0.6) translateZ(-200px); z-index: 1; opacity: 0; pointer-events: none; }
+
+        /* 底部控制组 */
+        .slider-controls { display: flex; align-items: center; justify-content: center; gap: 15px; width: 80%; max-width: 500px; }
+        .slider-line { height: 2px; flex-grow: 1; background-color: var(--accent-claude); opacity: 0.5; border-radius: 2px; }
+        .slider-btn { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border); background-color: var(--bg-main); color: var(--text-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .slider-btn:hover { border-color: var(--accent-claude); color: var(--accent-claude); transform: scale(1.05); }
+
+        /* =========================================
+           视图 5: 数字孪生专属预留界面 (新增彩蛋)
+           ========================================= */
+        .digital-twin-placeholder {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 5rem 2rem;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative; /* 供小精灵吸附 */
+        }
+        .digital-twin-icon { font-size: 4rem; margin-bottom: 1.5rem; animation: float 3s ease-in-out infinite; }
+        .digital-twin-text { font-size: 1.1rem; color: var(--text-secondary); line-height: 1.8; max-width: 600px; margin: 0 auto; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* =========================================
+           全局脱离：数字孪生彩蛋小宠物 
+           ========================================= */
+        .easter-egg {
+            position: absolute; 
+            cursor: pointer;
+            z-index: 9999; 
+            text-decoration: none;
+            width: 36px;
+            height: 32px;
+            display: block;
+            margin-top: 0;
+            --egg-rotate: 0deg; 
+            transition: left 1.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        top 1.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        transform 0.4s ease;
+            transform: rotate(var(--egg-rotate)) scale(1);
+        }
+
+        .easter-egg:hover { transform: rotate(var(--egg-rotate)) scale(1.15); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .easter-egg.is-falling { pointer-events: none; }
+        .mascot { width: 100%; height: 100%; background-color: var(--accent-claude); border-radius: 18px 18px 0 0; position: relative; }
+
+        .eye-container { position: absolute; width: 5px; height: 5px; top: 10px; }
+        .eye-container.left { left: 9px; }
+        .eye-container.right { right: 9px; }
+
+        .eye { width: 100%; height: 100%; background-color: #1a1919; border-radius: 50%; transition: all 0.2s ease; }
+        .mascot.is-normal .eye { animation: blink 4s infinite; }
+
+        .mouth {
+            position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 0; height: 0;
+            background-color: #1a1919; border-radius: 0 0 10px 10px; transition: all 0.2s ease; opacity: 0;
+        }
+
+        /* 情绪引擎 */
+        .mascot.is-happy .eye { animation: none !important; transform: scale(1.3) !important; }
+        .mascot.is-happy .mouth { width: 12px; height: 6px; border-radius: 0 0 12px 12px; opacity: 1; }
+        .mascot.is-confused .eye-container.left .eye { animation: none !important; transform: scale(1.5) !important; }
+        .mascot.is-confused .eye-container.right .eye { animation: none !important; transform: scale(0.6) !important; }
+        .mascot.is-confused .mouth { width: 8px; height: 10px; border-radius: 4px; opacity: 1; background-color: #1a1919; }
+
+        @keyframes blink { 0%, 95%, 98% { transform: scaleY(1); } 96%, 97% { transform: scaleY(0.1); } }
+
+        /* 响应式调整 */
+        @media (max-width: 1024px) {
+            .main-canvas { margin-left: 80px; }
+            .sidebar { width: 80px; align-items: center; padding: 2rem 0.5rem; }
+            .brand-logo { font-size: 0; padding-bottom: 0; margin-bottom: 2rem; border-bottom: none; justify-content: center; }
+            .brand-logo::before { margin-right: 0; }
+            .nav-item span { display: none; }
+            .content-wrapper { margin-left: 0; max-width: 100%; }
+            .ppt-featured-card { flex-direction: column; }
+            .ppt-featured-card .ppt-image-placeholder, .ppt-info { width: 100%; }
+            .slider-slide { width: 80%; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: 60px; flex-direction: row; bottom: 0; top: auto; border-right: none; border-top: 1px solid var(--border); }
+            .brand-logo { display: none; }
+            .nav-items { display: flex; width: 100%; justify-content: space-around; }
+            .main-canvas { margin-left: 0; padding: 1.5rem 1rem 2rem 1rem; min-height: calc(100vh - 60px); }
+            .content-wrapper { margin-left: 0; }
+            .project-grid { grid-template-columns: 1fr; } 
+            .ppt-grid { grid-template-columns: 1fr; }
+            .name-section h1 { font-size: 2.8rem; }
+            .identity-panel { padding: 2rem; }
+            .contact-panel { padding: 2rem 0; gap: 1.5rem; margin-top: 1.5rem; }
+            .contact-header { padding-left: 1.5rem; }
+            .contact-grid { grid-template-columns: 1fr; gap: 1.2rem; padding: 0 1.5rem; }
+            .slider-slide { width: 90%; }
+            .ppt-detail-block { padding: 2rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="brand-logo">Qu_admin</div>
+            <!-- 默认激活 Overview -->
+            <ul class="nav-items">
+                <li class="nav-item active" id="nav-overview" onclick="switchTab('overview')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>Overview</span>
+                </li>
+                <li class="nav-item" id="nav-ai-projects" onclick="switchTab('ai-projects')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                    <span>AI Projects</span>
+                </li>
+                <li class="nav-item" id="nav-visual-decks" onclick="switchTab('visual-decks')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+                    <span>PPT Works</span>
+                </li>
+                <li class="nav-item" id="nav-media-feed" onclick="switchTab('media-feed')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+                    <span>Media Feed</span>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-canvas">
+            
+            <header class="top-toolbar">
+                <div class="breadcrumb-area">
+                    <!-- 默认标题变更为 Overview -->
+                    <span class="breadcrumb" id="header-breadcrumb">Pages / Overview</span>
+                    <div class="page-title" id="header-title">概览</div>
+                </div>
+                
+                <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="切换主题">
+                    <svg id="moon-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <svg id="sun-icon" style="display:none" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </button>
+            </header>
+
+            <!-- ==============================================
+                 视图 1：Overview (概览) - 默认激活
+                 ============================================== -->
+            <div id="view-overview" class="content-wrapper view-section active-view">
+                <section class="identity-panel">
+                    <div class="header-row">
+                        <div class="name-section">
+                            <h1>曲旭航</h1>
+                        </div>
+                        <div class="avatar-box">
+                            <img src="头像.png" alt="" class="avatar-img">
+                        </div>
+                    </div>
+                    <div class="aphorism-area">
+                        <div id="typewriter" class="typewriter"></div>
+                    </div>
+                    <div class="bio-content">
+                        <p class="bio-text">华北水利水电大学大一法学新生，AI艺术的终身学习者，超级个体践行者，自媒体生长者，希望在未来相遇！</p>
+                    </div>
+                </section>
+                <section class="contact-panel">
+                    <div class="contact-header"><h3>CONTACT ME</h3></div>
+                    <div class="contact-grid">
+                        <div class="contact-item"><span class="label">Wechat</span><span class="value">_15037954763_</span></div>
+                        <div class="contact-item"><span class="label">Email</span><span class="value">hfdiijkll@gmail.com</span></div>
+                        <div class="contact-item"><span class="label">Phone</span><span class="value">15037954763</span></div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ==============================================
+                 视图 2：AI Projects 
+                 ============================================== -->
+            <div id="view-ai-projects" class="content-wrapper view-section">
+                <div class="series-section" style="margin-bottom: 0.5rem;">
+                    <label class="series-label">
+                        AI 机器人系列 
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </label>
+                </div>
+                <div class="project-grid">
+                    <div class="project-card">
+                        <svg class="card-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2v6h-5.2c1.2 2.3 1.7 4.7 1.7 7.2 0 4.8-3.9 8.8-8.8 8.8-2 0-3.9-.6-5.4-1.8l-1.3 1.3c-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4l1.3-1.3C1.2 19.3.6 17.4.6 15.4c0-4.8 3.9-8.8 8.8-8.8 2.5 0 4.9.5 7.2 1.7V2h4.9z"/></svg>
+                        <h4 class="card-title">Distill</h4>
+                        <p class="card-desc">基于wx4py衍生的微信群聊机器人，可以实现在普通微信群聊的群总结与活跃气氛等固定任务（可定制），可添加skills，可以作为普通群聊的龙虾替代（skills完善中）</p>
+                        <button class="try-btn">Try it <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                    </div>
+                    <div class="project-card">
+                        <svg class="card-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm16 14V6H4v12h16zM6 8h4v2H6V8zm0 4h12v2H6v-2zm0 4h8v2H6v-2z"/></svg>
+                        <h4 class="card-title">MomoAI</h4>
+                        <p class="card-desc">基于 Vue 3 + FastAPI，接入 DeepSeek-V3 大语言模型，通过精细的 Prompt 设计和Rag知识库检索设计的情绪陪伴机器人，有什么就来告诉小墨墨吧！</p>
+                        <button class="try-btn">Try it <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                    </div>
+                    <div class="project-card">
+                        <svg class="card-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <h4 class="card-title">Mindprint</h4>
+                        <p class="card-desc">Mindprint 是一个个人数字孪生系统，该系统结合了结构化思维记录、检索增强生成（RAG）和迭代式自我反思，以模拟一个持续进化的“第二大脑”。</p>
+                        <button class="try-btn">Try it <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                    </div>
+                    <div class="project-card">
+                        <svg class="card-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                        <h4 class="card-title">NeuroCycle</h4>
+                        <p class="card-desc">NeuroCycle 是一个持续学习模块，通过主动地回顾存储的思维预料，可以使数字孪生系统不仅可以更好的记住信息，也可以更精确的模仿思维风格</p>
+                        <button class="try-btn">Try it <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================
+                 视图 3：PPT Works (网格导航页) - 默认隐藏
+                 ============================================== -->
+            <div id="view-visual-decks" class="content-wrapper view-section">
+                
+                <div class="ppt-section-title"><span class="dot"></span> 精选作品</div>
+                <div class="ppt-featured-card">
+                    <div class="ppt-image-placeholder">
+                        <img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-1.jpg" class="real-ppt-img" alt="PPT-1封面">
+                        <span style="opacity: 0.7; font-size: 0.8rem; letter-spacing: 2px;">PPT-1</span>
+                    </div>
+                    <div class="ppt-info">
+                        <span class="ppt-badge">置顶展示</span>
+                        <h3>智慧水电</h3>
+                        <div class="ppt-meta">
+                            <span class="ppt-tag">竞赛答辩</span>
+                            <button class="ppt-btn" onclick="showPPTDetails('detail-ppt-1')">查看详情 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ppt-section-title"><span class="dot"></span> 全部作品</div>
+                <div class="ppt-grid">
+                    <div class="ppt-card">
+                        <div class="ppt-image-placeholder">
+                            <img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-2.png" class="real-ppt-img" alt="PPT-2封面">
+                        </div>
+                        <div class="ppt-info">
+                            <h4>康乐颐年</h4>
+                            <div class="ppt-meta">
+                                <span class="ppt-tag">竞赛答辩</span>
+                                <button class="ppt-btn" onclick="showPPTDetails('detail-ppt-2')">查看 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ppt-card">
+                        <div class="ppt-image-placeholder">
+                            <img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-3.jpg" class="real-ppt-img" alt="PPT-3封面">
+                        </div>
+                        <div class="ppt-info">
+                            <h4>汉裳智选</h4>
+                            <div class="ppt-meta">
+                                <span class="ppt-tag">竞赛答辩</span>
+                                <button class="ppt-btn" onclick="showPPTDetails('detail-ppt-3')">查看 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ppt-card">
+                        <div class="ppt-image-placeholder">
+                            <img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-4.jpg" class="real-ppt-img" alt="PPT-4封面">
+                        </div>
+                        <div class="ppt-info">
+                            <h4>A BITE OF CHINA</h4>
+                            <div class="ppt-meta">
+                                <span class="ppt-tag">英文汇报</span>
+                                <button class="ppt-btn" onclick="showPPTDetails('detail-ppt-4')">查看 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================
+                 视图 4：PPT 作品集 - 详细展示展厅 (Cover Flow)
+                 ============================================== -->
+            <div id="view-ppt-details" class="content-wrapper view-section">
+                <div class="back-nav" onclick="switchTab('visual-decks')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    返回作品集
+                </div>
+
+                <!-- 详情 1：智慧水电 -->
+                <div class="ppt-detail-block" id="detail-ppt-1">
+                    <h3 class="detail-block-title">智慧水电 - 详情展示</h3>
+                    <div class="slider-viewport" id="slider-1">
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-1.jpg" class="real-ppt-img" alt="PPT-1封面图复用"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-1-2.jpg" class="real-ppt-img" alt="PPT-1-2"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-1-3.jpg" class="real-ppt-img" alt="PPT-1-3"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-1-4.jpg" class="real-ppt-img" alt="PPT-1-4"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-1-5.jpg" class="real-ppt-img" alt="PPT-1-5"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-1-6.jpg" class="real-ppt-img" alt="PPT-1-6"></div>
+                    </div>
+                    <div class="slider-controls">
+                        <div class="slider-line"></div>
+                        <button class="slider-btn prev" onclick="moveSlider('slider-1', -1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                        <button class="slider-btn next" onclick="moveSlider('slider-1', 1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6 6-6"/></svg></button>
+                        <div class="slider-line"></div>
+                    </div>
+                </div>
+
+                <!-- 详情 2：康乐颐年 -->
+                <div class="ppt-detail-block" id="detail-ppt-2">
+                    <h3 class="detail-block-title">康乐颐年 - 详情展示</h3>
+                    <div class="slider-viewport" id="slider-2">
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-2.png" class="real-ppt-img" alt="PPT-2封面图复用"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-2-2.jpg" class="real-ppt-img" alt="PPT-2-2"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-2-3.jpg" class="real-ppt-img" alt="PPT-2-3"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-2-4.jpg" class="real-ppt-img" alt="PPT-2-4"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-2-5.jpg" class="real-ppt-img" alt="PPT-2-5"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-2-6.jpg" class="real-ppt-img" alt="PPT-2-6"></div>
+                    </div>
+                    <div class="slider-controls">
+                        <div class="slider-line"></div>
+                        <button class="slider-btn prev" onclick="moveSlider('slider-2', -1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                        <button class="slider-btn next" onclick="moveSlider('slider-2', 1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6 6-6"/></svg></button>
+                        <div class="slider-line"></div>
+                    </div>
+                </div>
+
+                <!-- 详情 3：汉裳智选 -->
+                <div class="ppt-detail-block" id="detail-ppt-3">
+                    <h3 class="detail-block-title">汉裳智选 - 详情展示</h3>
+                    <div class="slider-viewport" id="slider-3">
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-3.jpg" class="real-ppt-img" alt="PPT-3封面图复用"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-3-2.jpg" class="real-ppt-img" alt="PPT-3-2"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-3-3.jpg" class="real-ppt-img" alt="PPT-3-3"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-3-4.jpg" class="real-ppt-img" alt="PPT-3-4"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-3-5.jpg" class="real-ppt-img" alt="PPT-3-5"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-3-6.jpg" class="real-ppt-img" alt="PPT-3-6"></div>
+                    </div>
+                    <div class="slider-controls">
+                        <div class="slider-line"></div>
+                        <button class="slider-btn prev" onclick="moveSlider('slider-3', -1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                        <button class="slider-btn next" onclick="moveSlider('slider-3', 1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6 6-6"/></svg></button>
+                        <div class="slider-line"></div>
+                    </div>
+                </div>
+
+                <!-- 详情 4：A BITE OF CHINA -->
+                <div class="ppt-detail-block" id="detail-ppt-4">
+                    <h3 class="detail-block-title">A BITE OF CHINA - 详情展示</h3>
+                    <div class="slider-viewport" id="slider-4">
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-4.jpg" class="real-ppt-img" alt="PPT-4封面图复用"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-4-2.jpg" class="real-ppt-img" alt="PPT-4-2"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-4-3.jpg" class="real-ppt-img" alt="PPT-4-3"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-4-4.jpg" class="real-ppt-img" alt="PPT-4-4"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-4-5.jpg" class="real-ppt-img" alt="PPT-4-5"></div>
+                        <div class="slider-slide"><img src="C:/Users/Lenovo/Documents/个人网站—claude风格/PPT-4-6.jpg" class="real-ppt-img" alt="PPT-4-6"></div>
+                    </div>
+                    <div class="slider-controls">
+                        <div class="slider-line"></div>
+                        <button class="slider-btn prev" onclick="moveSlider('slider-4', -1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                        <button class="slider-btn next" onclick="moveSlider('slider-4', 1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6 6-6"/></svg></button>
+                        <div class="slider-line"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ==============================================
+                 视图 5：数字孪生空间占位 (新增彩蛋页)
+                 ============================================== -->
+            <div id="view-digital-twin" class="content-wrapper view-section">
+                <div class="back-nav" onclick="switchTab('overview')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    返回首页
+                </div>
+                <div class="ppt-detail-block" style="text-align: center; padding: 5rem 2rem; margin-top: 2rem;">
+                    <div class="digital-twin-icon">🤖</div>
+                    <h3 class="detail-block-title" style="margin-bottom: 1rem;">数字孪生空间建设中...</h3>
+                    <p class="digital-twin-text">
+                        注意到我的“墨墨”了嘛，他是我的数字大脑的形象。<br>
+                        这片数字孪生空间还在紧锣密鼓地开发中，期待您以后和我的数字大脑聊天！
+                    </p>
+                </div>
+            </div>
+
+            <!-- 为未来预留：视图 6 -->
+            <div id="view-media-feed" class="content-wrapper view-section">
+                <h3 style="opacity: 0.5;">自媒体信息流接入中...</h3>
+            </div>
+        </main>
+    </div>
+
+    <!-- 数字孪生彩蛋：现在点击不再调用 href，而是通过 JS 智能分配跳转 -->
+    <a href="javascript:void(0)" class="easter-egg" id="easter-egg-mascot" title="嗨！点击进入我的数字孪生空间" onclick="handleMascotClick(event)" style="left: -100px; top: -100px; opacity: 0;">
+        <div class="mascot is-normal">
+            <div class="eye-container left"><div class="eye"></div></div>
+            <div class="eye-container right"><div class="eye"></div></div>
+            <div class="mouth"></div> 
+        </div>
+    </a>
+
+    <script>
+        // ==============================================
+        // 【核心配置】数字孪生真实项目链接（在此处修改！）
+        // 开发完成后，只需将下方双引号内填入实际网址即可，例如："https://chat.xxx.com"
+        // 如果留空，点击小精灵会自动显示内置的占位反馈页。
+        const DIGITAL_TWIN_URL = ""; 
+        // ==============================================
+
+        const pagesConfig = {
+            'overview': { breadcrumb: 'Pages / Overview', title: '概览' },
+            'ai-projects': { breadcrumb: 'Pages / AI Projects', title: 'AI 作品集' },
+            'visual-decks': { breadcrumb: 'Pages / PPT Works', title: 'PPT作品集' },
+            'media-feed': { breadcrumb: 'Pages / Media Feed', title: '内容矩阵' },
+            'digital-twin': { breadcrumb: 'Pages / 数字孪生空间', title: 'Momo Space' }
+        };
+
+        // 处理小精灵被点击的全局逻辑
+        function handleMascotClick(e) {
+            e.preventDefault(); // 阻止默认行为
+            
+            // 防误触：如果在掉落眩晕中不让点
+            if(document.getElementById('easter-egg-mascot').classList.contains('is-falling')) return;
+
+            if (DIGITAL_TWIN_URL && DIGITAL_TWIN_URL.trim() !== "") {
+                // 如果已经填好了真实链接，则直接在新标签页打开项目
+                window.open(DIGITAL_TWIN_URL, '_blank');
+            } else {
+                // 如果链接为空，切到内置的专属预留开发页面
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+                document.getElementById('view-digital-twin').classList.add('active-view');
+                
+                document.getElementById('header-breadcrumb').innerText = pagesConfig['digital-twin'].breadcrumb;
+                document.getElementById('header-title').innerText = pagesConfig['digital-twin'].title;
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(teleportMascot, 100); // 呼唤小精灵飞向这个新页面
+            }
+        }
+
+        // --- 核心切换逻辑 ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if(document.getElementById('nav-' + tabId)) {
+                document.getElementById('nav-' + tabId).classList.add('active');
+            }
+
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+            document.getElementById('view-' + tabId).classList.add('active-view');
+
+            document.getElementById('header-breadcrumb').innerText = pagesConfig[tabId].breadcrumb;
+            document.getElementById('header-title').innerText = pagesConfig[tabId].title;
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(teleportMascot, 300);
+        }
+
+        // --- 点击进入 PPT 详情展厅 ---
+        function showPPTDetails(targetId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+            document.getElementById('view-ppt-details').classList.add('active-view');
+            
+            document.getElementById('header-breadcrumb').innerText = 'Pages / PPT Works / 详情展示';
+            document.getElementById('header-title').innerText = '作品详情';
+
+            setTimeout(() => {
+                const target = document.getElementById(targetId);
+                if(target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                teleportMascot();
+            }, 100);
+        }
+
+        // --- 沉浸式 3D 轮播图控制逻辑 ---
+        const sliderStates = {};
+
+        function initSliders() {
+            document.querySelectorAll('.slider-viewport').forEach(slider => {
+                const id = slider.id;
+                sliderStates[id] = 0; 
+                renderSlider(id);
+            });
+        }
+
+        function moveSlider(sliderId, direction) {
+            const slides = document.querySelectorAll(`#${sliderId} .slider-slide`);
+            let maxIndex = slides.length - 1;
+            
+            sliderStates[sliderId] += direction;
+            if (sliderStates[sliderId] < 0) sliderStates[sliderId] = maxIndex;
+            if (sliderStates[sliderId] > maxIndex) sliderStates[sliderId] = 0;
+            
+            renderSlider(sliderId);
+        }
+
+        function renderSlider(sliderId) {
+            const slides = document.querySelectorAll(`#${sliderId} .slider-slide`);
+            const currentIndex = sliderStates[sliderId];
+
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev', 'next', 'hidden');
+                if (index === currentIndex) {
+                    slide.classList.add('active');
+                } else if (index === (currentIndex - 1 + slides.length) % slides.length) {
+                    slide.classList.add('prev');
+                } else if (index === (currentIndex + 1) % slides.length) {
+                    slide.classList.add('next');
+                } else {
+                    slide.classList.add('hidden');
+                }
+            });
+        }
+
+        initSliders();
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const target = current === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', target);
+            
+            document.getElementById('moon-icon').style.display = target === 'light' ? 'block' : 'none';
+            document.getElementById('sun-icon').style.display = target === 'dark' ? 'block' : 'none';
+        }
+
+        const texts = [
+            "言出法随是神的能力，而AI是我们窥探神迹的马良之笔",
+            "无限生长，无限进步"
+        ];
+        let tIdx = 0, cIdx = 0, isDel = false;
+        const typeTarget = document.getElementById('typewriter');
+
+        function play() {
+            if(!typeTarget) return;
+            const current = texts[tIdx];
+            const displayChar = isDel ? current.substring(0, cIdx - 1) : current.substring(0, cIdx + 1);
+            typeTarget.innerHTML = displayChar || "&nbsp;"; 
+            cIdx = isDel ? cIdx - 1 : cIdx + 1;
+            let speed = isDel ? 40 : 100;
+            if (!isDel && cIdx === current.length) { speed = 2500; isDel = true; }
+            else if (isDel && cIdx === 0) { isDel = false; tIdx = (tIdx + 1) % texts.length; speed = 500; }
+            setTimeout(play, speed);
+        }
+
+        function getAbsoluteRect(el) {
+            const rect = el.getBoundingClientRect();
+            return {
+                top: rect.top + window.scrollY,
+                bottom: rect.bottom + window.scrollY,
+                left: rect.left + window.scrollX,
+                right: rect.right + window.scrollX,
+                width: rect.width,
+                height: rect.height
+            };
+        }
+
+        const mascot = document.getElementById('easter-egg-mascot');
+        const mascotInner = document.querySelector('.mascot');
+        let currentRotation = 0; 
+        let teleportTimer = null; 
+        let attachedElement = null; 
+
+        function teleportMascot() {
+            if(!mascot) return;
+            if(mascot.classList.contains('is-falling')) return; 
+
+            let hideouts = [];
+
+            // ================= 场景 1：Overview =================
+            if (document.getElementById('view-overview').classList.contains('active-view')) {
+                const nameEl = document.querySelector('.name-section h1');
+                if (nameEl) {
+                    const nRect = getAbsoluteRect(nameEl);
+                    hideouts.push({ left: nRect.right - 36, top: nRect.top - 28, rotate: 0, el: nameEl }); 
+                    hideouts.push({ left: nRect.left + 60, top: nRect.bottom - 4, rotate: 180, el: nameEl }); 
+                }
+                
+                const avatarEl = document.querySelector('.avatar-box');
+                if (avatarEl) {
+                    const aRect = getAbsoluteRect(avatarEl);
+                    for(let i=0; i<3; i++) {
+                        hideouts.push({ left: aRect.left + (aRect.width / 2) - 18, top: aRect.top - 32, rotate: 0, el: avatarEl }); 
+                        hideouts.push({ left: aRect.left + (aRect.width / 2) - 18, top: aRect.bottom, rotate: 180, el: avatarEl }); 
+                        hideouts.push({ left: aRect.left - 34, top: aRect.top + (aRect.height / 2) - 16, rotate: -90, el: avatarEl }); 
+                        hideouts.push({ left: aRect.right - 2, top: aRect.top + (aRect.height / 2) - 16, rotate: 90, el: avatarEl }); 
+                    }
+                }
+            }
+
+            // ================= 场景 2：AI Projects =================
+            else if (document.getElementById('view-ai-projects').classList.contains('active-view')) {
+                document.querySelectorAll('#view-ai-projects .try-btn').forEach(btn => {
+                    const bRect = getAbsoluteRect(btn);
+                    hideouts.push({ left: bRect.left + 15, top: bRect.bottom, rotate: 180, el: btn }); 
+                });
+            }
+
+            // ================= 场景 3：PPT Works 列表网格 =================
+            else if (document.getElementById('view-visual-decks').classList.contains('active-view')) {
+                document.querySelectorAll('#view-visual-decks .ppt-image-placeholder').forEach(box => {
+                    const bRect = getAbsoluteRect(box);
+                    if (bRect.width >= 36) {
+                        const randomOffsetTop = Math.random() * (bRect.width - 36);
+                        const randomOffsetBottom = Math.random() * (bRect.width - 36);
+
+                        hideouts.push({ left: bRect.left + randomOffsetTop, top: bRect.top - 32, rotate: 0, el: box }); 
+                        hideouts.push({ left: bRect.left + randomOffsetBottom, top: bRect.bottom, rotate: 180, el: box }); 
+                    }
+                });
+            }
+
+            // ================= 场景 4：PPT 作品集 - 详情展厅 =================
+            else if (document.getElementById('view-ppt-details').classList.contains('active-view')) {
+                document.querySelectorAll('#view-ppt-details .ppt-detail-block').forEach(block => {
+                    const bRect = getAbsoluteRect(block);
+                    if (bRect.width >= 36) {
+                        const randomOffsetTop = Math.random() * (bRect.width - 36);
+                        const randomOffsetBottom = Math.random() * (bRect.width - 36);
+
+                        hideouts.push({ left: bRect.left + randomOffsetTop, top: bRect.top - 32, rotate: 0, el: block }); 
+                        hideouts.push({ left: bRect.left + randomOffsetBottom, top: bRect.bottom, rotate: 180, el: block }); 
+                    }
+                });
+            }
+
+            // ================= 场景 5：数字孪生专属占位页 =================
+            else if (document.getElementById('view-digital-twin').classList.contains('active-view')) {
+                const block = document.querySelector('#view-digital-twin .ppt-detail-block');
+                if(block) {
+                    const bRect = getAbsoluteRect(block);
+                    if(bRect.width >= 36) {
+                        const randomOffsetTop = Math.random() * (bRect.width - 36);
+                        hideouts.push({ left: bRect.left + randomOffsetTop, top: bRect.top - 32, rotate: 0, el: block }); 
+                        hideouts.push({ left: bRect.left + randomOffsetTop, top: bRect.bottom, rotate: 180, el: block }); 
+                    }
+                }
+            }
+
+            if (hideouts.length === 0) {
+                hideouts.push({ left: window.scrollX + 100, top: window.scrollY + 100, rotate: 0, el: null });
+            }
+
+            const targetPos = hideouts[Math.floor(Math.random() * hideouts.length)];
+            
+            mascot.style.transition = '';
+            mascot.style.opacity = 1; 
+            mascot.style.left = `${targetPos.left}px`;
+            mascot.style.top = `${targetPos.top}px`;
+            mascot.style.setProperty('--egg-rotate', `${targetPos.rotate}deg`);
+            
+            currentRotation = targetPos.rotate;
+            attachedElement = targetPos.el; 
+        }
+
+        // --- 坠落引擎 ---
+        function triggerCartoonDrop(targetBtn) {
+            if (mascot.classList.contains('is-falling')) return;
+            
+            mascotInner.classList.remove('is-happy', 'is-normal');
+            mascotInner.classList.add('is-confused');
+            mascot.classList.add('is-falling'); 
+            clearInterval(teleportTimer);
+            
+            mascot.style.setProperty('--egg-rotate', `0deg`);
+
+            setTimeout(() => {
+                let targetLeft, targetTop;
+                if (targetBtn) {
+                    const bRect = getAbsoluteRect(targetBtn);
+                    targetLeft = bRect.left + 15;
+                    targetTop = bRect.top - 32; 
+                    attachedElement = targetBtn;
+                } else {
+                    targetLeft = parseFloat(mascot.style.left);
+                    targetTop = parseFloat(mascot.style.top) + 200; 
+                    mascot.style.opacity = 0;
+                    attachedElement = null;
+                }
+
+                mascot.style.transition = 'top 0.4s cubic-bezier(0.5, 0, 1, 1), left 0.4s linear, transform 0.4s ease, opacity 0.4s ease';
+                mascot.style.left = `${targetLeft}px`;
+                mascot.style.top = `${targetTop}px`;
+                mascot.style.setProperty('--egg-rotate', `0deg`);
+                currentRotation = 0;
+
+                setTimeout(() => {
+                    mascotInner.classList.remove('is-confused');
+                    mascotInner.classList.add('is-normal');
+                    mascot.classList.remove('is-falling');
+                    
+                    mascot.style.transition = '';
+                    
+                    if (!targetBtn) teleportMascot(); 
+                    teleportTimer = setInterval(teleportMascot, 6000);
+                }, 400); 
+            }, 300); 
+        }
+
+        // 眼神跟随
+        document.addEventListener('mousemove', (e) => {
+            if(mascot.classList.contains('is-falling')) return; 
+
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+
+            const eyes = document.querySelectorAll('.eye-container');
+            eyes.forEach(eye => {
+                const rect = eye.getBoundingClientRect();
+                if(rect.width === 0) return; 
+
+                const eyeX = rect.left + rect.width / 2;
+                const eyeY = rect.top + rect.height / 2;
+
+                const angle = Math.atan2(mouseY - eyeY, mouseX - eyeX);
+                const localAngle = angle - (currentRotation * Math.PI / 180);
+                
+                const maxDistance = 2.5; 
+                const moveX = Math.cos(localAngle) * maxDistance;
+                const moveY = Math.sin(localAngle) * maxDistance;
+
+                eye.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            });
+        });
+
+        window.onload = () => {
+            play();
+            setTimeout(teleportMascot, 800);
+            teleportTimer = setInterval(teleportMascot, 6000);
+
+            // 交互事件绑定
+            document.querySelectorAll('.try-btn').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    if (attachedElement === btn && !mascot.classList.contains('is-falling')) {
+                        mascotInner.classList.remove('is-normal');
+                        mascotInner.classList.add('is-happy');
+                    }
+                });
+                btn.addEventListener('mouseleave', () => {
+                    mascotInner.classList.remove('is-happy');
+                    mascotInner.classList.add('is-normal');
+                });
+            });
+
+            document.querySelectorAll('.project-card').forEach((card, index) => {
+                card.addEventListener('mouseenter', () => {
+                    const btnInThisCard = card.querySelector('.try-btn');
+
+                    if (attachedElement === btnInThisCard && currentRotation === 180 && !mascot.classList.contains('is-falling')) {
+                        if (index === 0 || index === 1) {
+                            const targetCard = document.querySelectorAll('.project-card')[index + 2];
+                            if (targetCard) {
+                                const targetBtn = targetCard.querySelector('.try-btn');
+                                triggerCartoonDrop(targetBtn);
+                            }
+                        } else {
+                            triggerCartoonDrop(null);
+                        }
+                    }
+                });
+            });
+        };
+        
+        window.addEventListener('resize', teleportMascot);
+
+    </script>
+</body>
+</html>
