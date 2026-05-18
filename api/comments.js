@@ -48,11 +48,6 @@ function sanitize(str, maxLen) {
 }
 
 module.exports = async function handler(req, res) {
-    const supabase = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -61,6 +56,15 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') {
         return res.status(204).end();
     }
+
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(500).json({ error: 'Supabase 环境变量未设置', detail: '请检查 SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY' });
+    }
+
+    const supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
 
     // --- GET: 查询留言 ---
     if (req.method === 'GET') {
