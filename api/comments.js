@@ -1,4 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
+const { createClient } = require('@supabase/supabase-js');
 
 // 速率限制: IP → { count, resetAt }
 const rateLimitMap = new Map();
@@ -48,6 +48,11 @@ function sanitize(str, maxLen) {
 }
 
 module.exports = async function handler(req, res) {
+    const supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -55,13 +60,6 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'OPTIONS') {
         return res.status(204).end();
-    }
-
-    let sql;
-    try {
-        sql = neon(process.env.DATABASE_URL);
-    } catch (err) {
-        return res.status(500).json({ error: '数据库连接失败，请检查 DATABASE_URL 环境变量' });
     }
 
     // --- GET: 查询留言 ---
@@ -75,7 +73,13 @@ module.exports = async function handler(req, res) {
                 if (!password || password !== process.env.ADMIN_PASSWORD) {
                     return res.status(403).json({ error: '密码错误' });
                 }
-                const rows = await sql`SELECT * FROM comments ORDER BY created_at DESC`;
+                const { data: rows, error } = await supabase
+                    .from('comments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
                 const cities = new Set(rows.filter(r => r.city).map(r => `${r.province}-${r.city}`));
                 const provinceCounts = {};
                 rows.filter(r => r.province).forEach(r => {
@@ -89,10 +93,17 @@ module.exports = async function handler(req, res) {
                 });
             }
 
-            const rows = await sql`SELECT id, nickname, content, province, city, country, created_at FROM comments ORDER BY created_at DESC LIMIT 100`;
+            const { data: rows, error } = await supabase
+                .from('comments')
+                .select('id, nickname, content, province, city, country, created_at')
+                .order('created_at', { ascending: false })
+                .limit(100);
+
+            if (error) throw error;
+
             return res.status(200).json({ comments: rows });
         } catch (err) {
-            return res.status(500).json({ error: '数据库查询失败' });
+            return res.status(500).json({ error: '数据库查询失败', detail: err.message });
         }
     }
 
@@ -129,11 +140,19 @@ module.exports = async function handler(req, res) {
         const geo = await getGeoLocation(ip);
 
         try {
-            const rows = await sql`
-                INSERT INTO comments (nickname, content, province, city, country)
-                VALUES (${nickname}, ${content}, ${geo.province}, ${geo.city}, ${geo.country})
-                RETURNING id, nickname, content, province, city, country, created_at
-            `;
+            const { data: rows, error } = await supabase
+                .from('comments')
+                .insert({
+                    nickname,
+                    content,
+                    province: geo.province,
+                    city: geo.city,
+                    country: geo.country
+                })
+                .select('id, nickname, content, province, city, country, created_at');
+
+            if (error) throw error;
+
             return res.status(201).json({ ok: true, comment: rows[0] });
         } catch (err) {
             return res.status(500).json({ error: '留言提交失败', detail: err.message });
