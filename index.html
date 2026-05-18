@@ -486,6 +486,77 @@
             .slider-slide { width: 90%; }
             .ppt-detail-block { padding: 2rem 1rem; }
         }
+
+        /* =========================================
+           视图 6: 留言地图
+           ========================================= */
+        .guest-map-layout { display: flex; gap: 1.5rem; min-height: 500px; }
+        .map-panel { flex: 0 0 60%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+        .map-container { width: 100%; height: 100%; min-height: 500px; }
+        .comment-panel { flex: 1; display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+
+        .comment-form-block {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;
+        }
+        .comment-form-title { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
+        .comment-input, .comment-textarea {
+            width: 100%; padding: 0.7rem 1rem; border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg-main); color: var(--text-primary); font-size: 0.9rem;
+            font-family: inherit; resize: vertical; outline: none; transition: var(--transition);
+        }
+        .comment-input:focus, .comment-textarea:focus { border-color: var(--accent-claude); }
+        .submit-btn { align-self: flex-end; }
+        .comment-error { color: #e74c3c; font-size: 0.8rem; font-weight: 600; }
+        .comment-success { color: #27ae60; font-size: 0.8rem; font-weight: 600; }
+
+        .comment-list {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 1.5rem; flex: 1; overflow-y: auto; max-height: 400px;
+            display: flex; flex-direction: column; gap: 1rem;
+        }
+        .comment-empty { color: var(--text-placeholder); font-size: 0.9rem; text-align: center; padding: 2rem 0; }
+
+        .comment-item { padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        .comment-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .comment-item-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+        .comment-item-nickname { font-weight: 800; font-size: 0.9rem; color: var(--text-primary); }
+        .comment-item-location {
+            font-size: 0.7rem; background: rgba(217,119,87,0.1); color: var(--accent-claude);
+            padding: 2px 8px; border-radius: 6px; font-weight: 700;
+        }
+        .comment-item-time { font-size: 0.7rem; color: var(--text-placeholder); margin-left: auto; }
+        .comment-item-content { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
+
+        /* 后台管理页 */
+        .admin-section { display: none; }
+        .admin-section.active { display: flex; flex-direction: column; gap: 1.5rem; }
+        .admin-auth { display: flex; gap: 0.5rem; align-items: center; }
+        .admin-auth input {
+            padding: 0.6rem 1rem; border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg-main); color: var(--text-primary); font-size: 0.9rem; outline: none;
+        }
+        .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .admin-stat-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 1.5rem; text-align: center;
+        }
+        .admin-stat-num { font-size: 2rem; font-weight: 900; color: var(--accent-claude); }
+        .admin-stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
+        .admin-province-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .admin-province-tag {
+            font-size: 0.8rem; background: var(--bg-block); color: var(--text-on-block);
+            padding: 0.3rem 0.8rem; border-radius: 8px; font-weight: 600;
+        }
+
+        /* 留言地图响应式 */
+        @media (max-width: 768px) {
+            .guest-map-layout { flex-direction: column; }
+            .map-panel { flex: 0 0 auto; }
+            .map-container { min-height: 350px; }
+            .comment-list { max-height: 300px; }
+            .admin-stats { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -768,9 +839,28 @@
                 </div>
             </div>
 
-            <!-- 为未来预留：视图 6 -->
-            <div id="view-media-feed" class="content-wrapper view-section">
-                <h3 style="opacity: 0.5;">自媒体信息流接入中...</h3>
+            <!-- 视图 6：留言地图 -->
+            <div id="view-guest-map" class="content-wrapper view-section">
+                <div class="guest-map-layout">
+                    <div class="map-panel">
+                        <div id="china-map" class="map-container"></div>
+                    </div>
+                    <div class="comment-panel">
+                        <div class="comment-form-block">
+                            <h4 class="comment-form-title">留下足迹</h4>
+                            <input type="text" id="cmt-nickname" class="comment-input" placeholder="你的昵称" maxlength="20" autocomplete="off">
+                            <textarea id="cmt-content" class="comment-textarea" placeholder="说点什么..." maxlength="500" rows="3"></textarea>
+                            <button id="cmt-submit" class="try-btn submit-btn" onclick="submitComment()">
+                                点亮地图 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+                            </button>
+                            <p id="cmt-error" class="comment-error" style="display:none"></p>
+                            <p id="cmt-success" class="comment-success" style="display:none">留言成功！你的城市在地图上点亮了 ✨</p>
+                        </div>
+                        <div class="comment-list" id="comment-list">
+                            <p class="comment-empty">暂无留言，成为第一个点亮地图的人吧！</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
