@@ -1481,7 +1481,7 @@
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    errorEl.textContent = data.error || '提交失败';
+                    errorEl.textContent = data.detail ? `${data.error}: ${data.detail}` : (data.error || '提交失败');
                     errorEl.style.display = 'block';
                     return;
                 }

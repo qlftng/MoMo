@@ -136,7 +136,7 @@ module.exports = async function handler(req, res) {
             `;
             return res.status(201).json({ ok: true, comment: rows[0] });
         } catch (err) {
-            return res.status(500).json({ error: '留言提交失败' });
+            return res.status(500).json({ error: '留言提交失败', detail: err.message });
         }
     }
 
