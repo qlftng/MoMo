@@ -48,8 +48,6 @@ function sanitize(str, maxLen) {
 }
 
 module.exports = async function handler(req, res) {
-    const sql = neon(process.env.DATABASE_URL);
-
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -57,6 +55,13 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'OPTIONS') {
         return res.status(204).end();
+    }
+
+    let sql;
+    try {
+        sql = neon(process.env.DATABASE_URL);
+    } catch (err) {
+        return res.status(500).json({ error: '数据库连接失败，请检查 DATABASE_URL 环境变量' });
     }
 
     // --- GET: 查询留言 ---
