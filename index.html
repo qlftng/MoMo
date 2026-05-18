@@ -181,7 +181,8 @@
         .aphorism-area { min-height: 2.5rem; display: flex; align-items: center; }
         .typewriter { font-size: 1.4rem; font-weight: 600; color: #000; border-right: 3px solid #000; animation: caret 0.8s infinite; line-height: 1.4; }
         .bio-text { font-size: 1.1rem; color: #333; line-height: 1.7; max-width: 90%; }
-        
+        .hero-guest-btn { align-self: flex-start; margin-top: 0.5rem; }
+
         .contact-panel { background-color: var(--bg-nav); border-radius: var(--radius); padding: 2.5rem 0; display: flex; flex-direction: column; gap: 1.5rem; transition: background-color 0.3s ease; }
         .contact-header { display: flex; align-items: center; padding-left: 2rem; }
         .contact-header h3 { font-size: 1.3rem; font-weight: 900; letter-spacing: 0.5px; color: var(--text-primary); text-transform: uppercase; }
@@ -622,6 +623,9 @@
                     <div class="bio-content">
                         <p class="bio-text">华北水利水电大学大一法学新生，AI艺术的终身学习者，超级个体践行者，自媒体生长者，希望在未来相遇！</p>
                     </div>
+                    <button id="hero-guest-btn" class="try-btn hero-guest-btn" onclick="switchTab('guest-map')">
+                        留下足迹，点亮我的地图 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+                    </button>
                 </section>
                 <section class="contact-panel">
                     <div class="contact-header"><h3>CONTACT ME</h3></div>
@@ -847,7 +851,7 @@
                         <div id="china-map" class="map-container"></div>
                     </div>
                     <div class="comment-panel">
-                        <div class="comment-form-block">
+                        <div class="comment-form-block" id="cmt-form-block">
                             <h4 class="comment-form-title">留下足迹</h4>
                             <input type="text" id="cmt-nickname" class="comment-input" placeholder="你的昵称" maxlength="20" autocomplete="off">
                             <textarea id="cmt-content" class="comment-textarea" placeholder="说点什么..." maxlength="500" rows="3"></textarea>
@@ -856,6 +860,9 @@
                             </button>
                             <p id="cmt-error" class="comment-error" style="display:none"></p>
                             <p id="cmt-success" class="comment-success" style="display:none">留言成功！你的城市在地图上点亮了 ✨</p>
+                        </div>
+                        <div id="cmt-done" class="comment-form-block" style="display:none">
+                            <p style="color: var(--accent-claude); font-weight: 700; text-align: center; font-size: 1rem;">你已经留下过足迹，感谢点亮我的地图 ✨</p>
                         </div>
                         <div class="comment-list" id="comment-list">
                             <p class="comment-empty">暂无留言，成为第一个点亮地图的人吧！</p>
@@ -1282,6 +1289,12 @@
             });
 
             checkAdminHash();
+
+            if (localStorage.getItem('momap_visited') === '1') {
+                document.getElementById('hero-guest-btn').style.display = 'none';
+                document.getElementById('cmt-form-block').style.display = 'none';
+                document.getElementById('cmt-done').style.display = 'flex';
+            }
         };
 
         window.addEventListener('resize', teleportMascot);
@@ -1488,6 +1501,9 @@
                 successEl.style.display = 'block';
                 nicknameEl.value = '';
                 contentEl.value = '';
+                localStorage.setItem('momap_visited', '1');
+                document.getElementById('hero-guest-btn').style.display = 'none';
+                document.getElementById('cmt-form-block').style.display = 'none';
                 await loadComments();
                 setTimeout(() => { successEl.style.display = 'none'; }, 4000);
             } catch {
