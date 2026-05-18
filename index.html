@@ -863,6 +863,28 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 后台管理面板（通过 URL hash #admin 进入） -->
+            <div class="admin-section" id="admin-section">
+                <div class="back-nav" onclick="hideAdmin()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    返回留言地图
+                </div>
+                <div class="admin-auth" id="admin-auth">
+                    <input type="password" id="admin-password" placeholder="请输入管理密码" maxlength="50">
+                    <button class="try-btn" onclick="adminLogin()">验证</button>
+                    <p id="admin-error" class="comment-error" style="display:none"></p>
+                </div>
+                <div id="admin-dashboard" style="display:none">
+                    <div class="admin-stats">
+                        <div class="admin-stat-card"><div class="admin-stat-num" id="stat-total">0</div><div class="admin-stat-label">总留言数</div></div>
+                        <div class="admin-stat-card"><div class="admin-stat-num" id="stat-cities">0</div><div class="admin-stat-label">点亮城市数</div></div>
+                        <div class="admin-stat-card"><div class="admin-stat-num" id="stat-provinces">0</div><div class="admin-stat-label">覆盖省份数</div></div>
+                    </div>
+                    <div id="admin-map" class="map-container" style="height: 450px;"></div>
+                    <div class="admin-province-list" id="admin-province-list"></div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -1244,9 +1266,12 @@
                     }
                 });
             });
+
+            checkAdminHash();
         };
-        
+
         window.addEventListener('resize', teleportMascot);
+        window.addEventListener('hashchange', checkAdminHash);
 
         // --- 留言地图核心 ---
         let chinaMapRegistered = false;
@@ -1458,6 +1483,96 @@
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '点亮地图 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>';
             }
+        }
+
+        // --- 后台管理 ---
+        let adminPassword = '';
+        let adminData = null;
+        let adminChart = null;
+
+        function checkAdminHash() {
+            if (window.location.hash === '#admin') {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+                document.getElementById('admin-section').classList.add('active');
+                document.getElementById('header-breadcrumb').innerText = 'Pages / Admin';
+                document.getElementById('header-title').innerText = '后台管理';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function hideAdmin() {
+            document.getElementById('admin-section').classList.remove('active');
+            document.getElementById('view-guest-map').classList.add('active-view');
+            document.getElementById('header-breadcrumb').innerText = pagesConfig['guest-map'].breadcrumb;
+            document.getElementById('header-title').innerText = pagesConfig['guest-map'].title;
+            window.location.hash = '';
+        }
+
+        async function adminLogin() {
+            const pw = document.getElementById('admin-password').value.trim();
+            const errorEl = document.getElementById('admin-error');
+            errorEl.style.display = 'none';
+
+            if (!pw) { errorEl.textContent = '请输入密码'; errorEl.style.display = 'block'; return; }
+
+            try {
+                const res = await fetch(`/api/comments?admin=true&password=${encodeURIComponent(pw)}`);
+                const data = await res.json();
+                if (!res.ok) { errorEl.textContent = data.error || '密码错误'; errorEl.style.display = 'block'; return; }
+
+                adminPassword = pw;
+                adminData = data;
+                document.getElementById('admin-auth').style.display = 'none';
+                document.getElementById('admin-dashboard').style.display = 'block';
+                renderAdminDashboard(data);
+            } catch {
+                errorEl.textContent = '网络错误'; errorEl.style.display = 'block';
+            }
+        }
+
+        function renderAdminDashboard(data) {
+            document.getElementById('stat-total').textContent = data.total;
+            document.getElementById('stat-cities').textContent = data.cities;
+            document.getElementById('stat-provinces').textContent = data.provinces.length;
+
+            const sorted = data.provinces.sort((a, b) => b.count - a.count);
+            document.getElementById('admin-province-list').innerHTML = sorted.map(p =>
+                `<span class="admin-province-tag">${p.name}: ${p.count}</span>`
+            ).join('');
+
+            ensureChinaMap().then(() => {
+                const dom = document.getElementById('admin-map');
+                if (!adminChart) {
+                    adminChart = echarts.init(dom);
+                    window.addEventListener('resize', () => adminChart && adminChart.resize());
+                }
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const cityCount = {};
+                data.comments.forEach(c => {
+                    if (!c.city) return;
+                    const key = `${c.province || ''}-${c.city}`;
+                    cityCount[key] = (cityCount[key] || 0) + 1;
+                });
+                const scatterData = Object.entries(cityCount).map(([key, count]) => {
+                    const [province, city] = key.split('-');
+                    return { name: city, value: [...getCityCoord(city, province), count] };
+                });
+                adminChart.setOption({
+                    backgroundColor: isDark ? '#1a1919' : '#fefcf5',
+                    tooltip: { trigger: 'item', formatter: p => p.seriesType === 'scatter' ? `${p.name}: ${p.value[2]} 条留言` : p.name },
+                    geo: {
+                        map: 'china', roam: false, zoom: 1.2, center: [104, 35],
+                        itemStyle: { areaColor: isDark ? '#2d2b2b' : '#f0ede5', borderColor: isDark ? '#3a3a3a' : '#ddd', borderWidth: 0.5 },
+                        emphasis: { itemStyle: { areaColor: isDark ? '#3d3b3b' : '#e0dcd0' } },
+                        label: { show: false }
+                    },
+                    series: [{
+                        type: 'scatter', coordinateSystem: 'geo', data: scatterData,
+                        symbolSize: val => Math.min(8 + val[2] * 4, 40),
+                        itemStyle: { color: '#d97757', shadowBlur: 10, shadowColor: '#d97757' }
+                    }]
+                }, true);
+            });
         }
 
     </script>
