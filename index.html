@@ -1144,6 +1144,20 @@
                 }
             }
 
+            // ================= 场景 6：留言地图 =================
+            else if (document.getElementById('view-guest-map').classList.contains('active-view')) {
+                const mapPanel = document.querySelector('.map-panel');
+                if (mapPanel) {
+                    const mRect = getAbsoluteRect(mapPanel);
+                    hideouts.push({ left: mRect.left + 20, top: mRect.top - 32, rotate: 0, el: mapPanel });
+                    hideouts.push({ left: mRect.right - 56, top: mRect.top - 32, rotate: 0, el: mapPanel });
+                }
+                document.querySelectorAll('#view-guest-map .submit-btn').forEach(btn => {
+                    const bRect = getAbsoluteRect(btn);
+                    hideouts.push({ left: bRect.left + 15, top: bRect.bottom, rotate: 180, el: btn });
+                });
+            }
+
             if (hideouts.length === 0) {
                 hideouts.push({ left: window.scrollX + 100, top: window.scrollY + 100, rotate: 0, el: null });
             }
