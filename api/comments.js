@@ -78,8 +78,12 @@ module.exports = async function handler(req, res) {
                 if (!envPw) {
                     return res.status(500).json({ error: 'ADMIN_PASSWORD 环境变量未设置或为空' });
                 }
-                if (!password || password.trim() !== envPw) {
-                    return res.status(403).json({ error: '密码错误' });
+                const inputPw = (password || '').trim();
+                if (!inputPw || inputPw !== envPw) {
+                    return res.status(403).json({
+                        error: '密码错误',
+                        detail: `输入="${inputPw}"(长度${inputPw.length}), 环境变量长度=${envPw.length}, 环境变量前4位="${envPw.slice(0, 4)}"`
+                    });
                 }
                 const { data: rows, error } = await supabase
                     .from('comments')
