@@ -74,7 +74,11 @@ module.exports = async function handler(req, res) {
 
         try {
             if (admin === 'true') {
-                if (!password || password !== process.env.ADMIN_PASSWORD) {
+                const envPw = (process.env.ADMIN_PASSWORD || '').trim();
+                if (!envPw) {
+                    return res.status(500).json({ error: 'ADMIN_PASSWORD 环境变量未设置或为空' });
+                }
+                if (!password || password.trim() !== envPw) {
                     return res.status(403).json({ error: '密码错误' });
                 }
                 const { data: rows, error } = await supabase
