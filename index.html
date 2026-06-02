@@ -1036,6 +1036,7 @@
         }
 
         // --- Intersection Observer 滚动监听 ---
+        let guestMapViewed = false;
         const scrollObserver = new IntersectionObserver((entries) => {
             if (isScrollingByClick) return;
             // 找到最靠上的可见 section
@@ -1054,7 +1055,8 @@
                 if (navEl) navEl.classList.add('active');
                 updateHeaderForSection(sectionId);
 
-                if (sectionId === 'guest-map') {
+                if (sectionId === 'guest-map' && !guestMapViewed) {
+                    guestMapViewed = true;
                     setTimeout(loadComments, 100);
                 }
             }
