@@ -151,8 +151,9 @@
         }
 
         /* --- 视图切换控制 --- */
-        .view-section { display: none; animation: fadeIn 0.4s ease; }
-        .view-section.active-view { display: flex; }
+        .view-section { animation: fadeIn 0.4s ease; }
+        #view-ppt-details, #view-digital-twin { display: none; }
+        #view-ppt-details.active-view, #view-digital-twin.active-view { display: flex; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -160,11 +161,35 @@
         }
 
         .content-wrapper {
-            max-width: 960px; 
+            display: flex;
+            max-width: 960px;
             width: 100%;
-            margin-left: 60px; 
+            margin-left: 60px;
             flex-direction: column;
-            gap: 1.5rem; 
+            gap: 1.5rem;
+        }
+
+        /* --- 分区标题 --- */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-top: 2rem;
+        }
+        .section-header-line {
+            flex-grow: 1;
+            height: 1px;
+            background-color: var(--border);
+        }
+        .section-header-label {
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            opacity: 0.5;
+            white-space: nowrap;
         }
 
         /* =========================================
@@ -223,8 +248,8 @@
 
         .try-btn {
             align-self: flex-end;
-            background-color: var(--text-primary); 
-            color: var(--bg-main); 
+            background-color: var(--text-primary);
+            color: var(--bg-main);
             border: none;
             border-radius: 20px;
             padding: 0.45rem 1.2rem;
@@ -237,6 +262,7 @@
             transition: var(--transition);
             z-index: 2;
             margin-top: 1rem;
+            text-decoration: none;
         }
 
         .try-btn:hover { opacity: 0.85; transform: scale(1.05); }
@@ -569,19 +595,19 @@
             <div class="brand-logo">Qu_admin</div>
             <!-- 默认激活 Overview -->
             <ul class="nav-items">
-                <li class="nav-item active" id="nav-overview" onclick="switchTab('overview')">
+                <li class="nav-item active" id="nav-overview" onclick="scrollToSection('overview')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     <span>Overview</span>
                 </li>
-                <li class="nav-item" id="nav-ai-projects" onclick="switchTab('ai-projects')">
+                <li class="nav-item" id="nav-ai-projects" onclick="scrollToSection('ai-projects')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                     <span>AI Projects</span>
                 </li>
-                <li class="nav-item" id="nav-visual-decks" onclick="switchTab('visual-decks')">
+                <li class="nav-item" id="nav-visual-decks" onclick="scrollToSection('visual-decks')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
                     <span>PPT Works</span>
                 </li>
-                <li class="nav-item" id="nav-guest-map" onclick="switchTab('guest-map')">
+                <li class="nav-item" id="nav-guest-map" onclick="scrollToSection('guest-map')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     <span>留言地图</span>
                 </li>
@@ -607,6 +633,7 @@
             <!-- ==============================================
                  视图 1：Overview (概览) - 默认激活
                  ============================================== -->
+            <div id="section-overview" class="scroll-section">
             <div id="view-overview" class="content-wrapper view-section active-view">
                 <section class="identity-panel">
                     <div class="header-row">
@@ -636,10 +663,18 @@
                     </div>
                 </section>
             </div>
+            </div>
+
+            <div class="section-header" style="padding-top: 3rem;">
+                <div class="section-header-line"></div>
+                <span class="section-header-label">AI Projects</span>
+                <div class="section-header-line"></div>
+            </div>
 
             <!-- ==============================================
-                 视图 2：AI Projects 
+                 视图 2：AI Projects
                  ============================================== -->
+            <div id="section-ai-projects" class="scroll-section">
             <div id="view-ai-projects" class="content-wrapper view-section">
                 <div class="series-section" style="margin-bottom: 0.5rem;">
                     <label class="series-label">
@@ -652,7 +687,7 @@
                         <svg class="card-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2v6h-5.2c1.2 2.3 1.7 4.7 1.7 7.2 0 4.8-3.9 8.8-8.8 8.8-2 0-3.9-.6-5.4-1.8l-1.3 1.3c-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4l1.3-1.3C1.2 19.3.6 17.4.6 15.4c0-4.8 3.9-8.8 8.8-8.8 2.5 0 4.9.5 7.2 1.7V2h4.9z"/></svg>
                         <h4 class="card-title">Distill</h4>
                         <p class="card-desc">基于wx4py衍生的微信群聊机器人，可以实现在普通微信群聊的群总结与活跃气氛等固定任务（可定制），可添加skills，可以作为普通群聊的龙虾替代（skills完善中）</p>
-                        <button class="try-btn">Try it <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                        <a class="try-btn" href="https://github.com/qlftng/wechat-bot" target="_blank" rel="noopener">Try it <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
                     </div>
                     <div class="project-card">
                         <svg class="card-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm16 14V6H4v12h16zM6 8h4v2H6V8zm0 4h12v2H6v-2zm0 4h8v2H6v-2z"/></svg>
@@ -674,10 +709,18 @@
                     </div>
                 </div>
             </div>
+            </div>
+
+            <div class="section-header" style="padding-top: 3rem;">
+                <div class="section-header-line"></div>
+                <span class="section-header-label">PPT Works</span>
+                <div class="section-header-line"></div>
+            </div>
 
             <!-- ==============================================
                  视图 3：PPT Works (网格导航页) - 默认隐藏
                  ============================================== -->
+            <div id="section-visual-decks" class="scroll-section">
             <div id="view-visual-decks" class="content-wrapper view-section">
                 
                 <div class="ppt-section-title"><span class="dot"></span> 精选作品</div>
@@ -738,12 +781,19 @@
                     </div>
                 </div>
             </div>
+            </div>
+
+            <div class="section-header" style="padding-top: 3rem;">
+                <div class="section-header-line"></div>
+                <span class="section-header-label">Guest Map</span>
+                <div class="section-header-line"></div>
+            </div>
 
             <!-- ==============================================
                  视图 4：PPT 作品集 - 详细展示展厅 (Cover Flow)
                  ============================================== -->
             <div id="view-ppt-details" class="content-wrapper view-section">
-                <div class="back-nav" onclick="switchTab('visual-decks')">
+                <div class="back-nav" onclick="hidePPTDetails()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     返回作品集
                 </div>
@@ -830,7 +880,7 @@
                  视图 5：数字孪生空间占位 (新增彩蛋页)
                  ============================================== -->
             <div id="view-digital-twin" class="content-wrapper view-section">
-                <div class="back-nav" onclick="switchTab('overview')">
+                <div class="back-nav" onclick="hideDigitalTwin()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     返回首页
                 </div>
@@ -845,6 +895,7 @@
             </div>
 
             <!-- 视图 6：留言地图 -->
+            <div id="section-guest-map" class="scroll-section">
             <div id="view-guest-map" class="content-wrapper view-section">
                 <div class="guest-map-layout">
                     <div class="map-panel">
@@ -869,6 +920,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
 
             <!-- 后台管理面板（通过 URL hash #admin 进入） -->
@@ -922,38 +974,123 @@
 
         // 处理小精灵被点击的全局逻辑
         function handleMascotClick(e) {
-            e.preventDefault(); // 阻止默认行为
-            
-            // 防误触：如果在掉落眩晕中不让点
+            e.preventDefault();
             if(document.getElementById('easter-egg-mascot').classList.contains('is-falling')) return;
 
             if (DIGITAL_TWIN_URL && DIGITAL_TWIN_URL.trim() !== "") {
-                // 如果已经填好了真实链接，则直接在新标签页打开项目
                 window.open(DIGITAL_TWIN_URL, '_blank');
             } else {
-                // 如果链接为空，切到内置的专属预留开发页面
-                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
                 document.getElementById('view-digital-twin').classList.add('active-view');
-                
-                document.getElementById('header-breadcrumb').innerText = pagesConfig['digital-twin'].breadcrumb;
-                document.getElementById('header-title').innerText = pagesConfig['digital-twin'].title;
-
+                updateHeaderForSection('digital-twin');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(teleportMascot, 100); // 呼唤小精灵飞向这个新页面
+                setTimeout(teleportMascot, 100);
             }
         }
 
-        // --- 核心切换逻辑 ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            if(document.getElementById('nav-' + tabId)) {
-                document.getElementById('nav-' + tabId).classList.add('active');
+        // --- 核心滚动导航 ---
+        let isScrollingByClick = false;
+
+        function scrollToSection(sectionId) {
+            // 如果 PPT 详情页正显示，先关闭
+            const pptDetails = document.getElementById('view-ppt-details');
+            const digitalTwin = document.getElementById('view-digital-twin');
+            if (pptDetails.classList.contains('active-view')) {
+                pptDetails.classList.remove('active-view');
+            }
+            if (digitalTwin.classList.contains('active-view')) {
+                digitalTwin.classList.remove('active-view');
             }
 
+            isScrollingByClick = true;
+            const target = document.getElementById('section-' + sectionId);
+            if (target) {
+                const offset = 20;
+                const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                window.scrollTo({ top, behavior: 'smooth' });
+            }
+
+            // 手动更新 nav active 状态
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const navEl = document.getElementById('nav-' + sectionId);
+            if (navEl) navEl.classList.add('active');
+
+            updateHeaderForSection(sectionId);
+
+            setTimeout(() => { isScrollingByClick = false; }, 800);
+            setTimeout(teleportMascot, 400);
+        }
+
+        function updateHeaderForSection(sectionId) {
+            const config = {
+                'overview': { breadcrumb: 'Pages / Overview', title: '概览' },
+                'ai-projects': { breadcrumb: 'Pages / AI Projects', title: 'AI 作品集' },
+                'visual-decks': { breadcrumb: 'Pages / PPT Works', title: 'PPT作品集' },
+                'guest-map': { breadcrumb: 'Pages / Guest Map', title: '留言地图' },
+                'ppt-details': { breadcrumb: 'Pages / PPT Works / 详情展示', title: '作品详情' },
+                'digital-twin': { breadcrumb: 'Pages / 数字孪生空间', title: 'Momo Space' },
+                'admin': { breadcrumb: 'Pages / Admin', title: '后台管理' }
+            };
+            const c = config[sectionId] || config['overview'];
+            document.getElementById('header-breadcrumb').innerText = c.breadcrumb;
+            document.getElementById('header-title').innerText = c.title;
+        }
+
+        // --- Intersection Observer 滚动监听 ---
+        const scrollObserver = new IntersectionObserver((entries) => {
+            if (isScrollingByClick) return;
+            // 找到最靠上的可见 section
+            let topMost = null;
+            let topMostTop = Infinity;
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.boundingClientRect.top < topMostTop) {
+                    topMostTop = entry.boundingClientRect.top;
+                    topMost = entry.target;
+                }
+            });
+            if (topMost) {
+                const sectionId = topMost.id.replace('section-', '');
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                const navEl = document.getElementById('nav-' + sectionId);
+                if (navEl) navEl.classList.add('active');
+                updateHeaderForSection(sectionId);
+
+                if (sectionId === 'guest-map') {
+                    setTimeout(loadComments, 100);
+                }
+            }
+        }, { threshold: [0, 0.2, 0.5] });
+
+        document.querySelectorAll('.scroll-section').forEach(el => scrollObserver.observe(el));
+
+        // --- 保留 switchTab 以兼容旧调用 ---
+        function switchTab(tabId) {
+            if (tabId === 'visual-decks' || tabId === 'overview' || tabId === 'ai-projects' || tabId === 'guest-map') {
+                scrollToSection(tabId);
+                return;
+            }
+            if (tabId === 'digital-twin') {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+                document.getElementById('view-digital-twin').classList.add('active-view');
+                updateHeaderForSection('digital-twin');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(teleportMascot, 100);
+                return;
+            }
+            // 旧 tab 切换逻辑的兜底
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if (document.getElementById('nav-' + tabId)) {
+                document.getElementById('nav-' + tabId).classList.add('active');
+            }
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
             document.getElementById('view-' + tabId).classList.add('active-view');
 
+            const pagesConfig = {
+                'overview': { breadcrumb: 'Pages / Overview', title: '概览' },
+                'ai-projects': { breadcrumb: 'Pages / AI Projects', title: 'AI 作品集' },
+                'visual-decks': { breadcrumb: 'Pages / PPT Works', title: 'PPT作品集' },
+                'guest-map': { breadcrumb: 'Pages / Guest Map', title: '留言地图' },
+                'digital-twin': { breadcrumb: 'Pages / 数字孪生空间', title: 'Momo Space' }
+            };
             document.getElementById('header-breadcrumb').innerText = pagesConfig[tabId].breadcrumb;
             document.getElementById('header-title').innerText = pagesConfig[tabId].title;
 
@@ -967,11 +1104,8 @@
 
         // --- 点击进入 PPT 详情展厅 ---
         function showPPTDetails(targetId) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
             document.getElementById('view-ppt-details').classList.add('active-view');
-            
-            document.getElementById('header-breadcrumb').innerText = 'Pages / PPT Works / 详情展示';
-            document.getElementById('header-title').innerText = '作品详情';
+            updateHeaderForSection('ppt-details');
 
             setTimeout(() => {
                 const target = document.getElementById(targetId);
@@ -980,6 +1114,16 @@
                 }
                 teleportMascot();
             }, 100);
+        }
+
+        function hidePPTDetails() {
+            document.getElementById('view-ppt-details').classList.remove('active-view');
+            scrollToSection('visual-decks');
+        }
+
+        function hideDigitalTwin() {
+            document.getElementById('view-digital-twin').classList.remove('active-view');
+            scrollToSection('overview');
         }
 
         // --- 沉浸式 3D 轮播图控制逻辑 ---
@@ -1077,108 +1221,94 @@
 
         function teleportMascot() {
             if(!mascot) return;
-            if(mascot.classList.contains('is-falling')) return; 
+            if(mascot.classList.contains('is-falling')) return;
 
             let hideouts = [];
 
-            // ================= 场景 1：Overview =================
-            if (document.getElementById('view-overview').classList.contains('active-view')) {
-                const nameEl = document.querySelector('.name-section h1');
-                if (nameEl) {
-                    const nRect = getAbsoluteRect(nameEl);
-                    hideouts.push({ left: nRect.right - 36, top: nRect.top - 28, rotate: 0, el: nameEl }); 
-                    hideouts.push({ left: nRect.left + 60, top: nRect.bottom - 4, rotate: 180, el: nameEl }); 
-                }
-                
-                const avatarEl = document.querySelector('.avatar-box');
-                if (avatarEl) {
-                    const aRect = getAbsoluteRect(avatarEl);
-                    for(let i=0; i<3; i++) {
-                        hideouts.push({ left: aRect.left + (aRect.width / 2) - 18, top: aRect.top - 32, rotate: 0, el: avatarEl }); 
-                        hideouts.push({ left: aRect.left + (aRect.width / 2) - 18, top: aRect.bottom, rotate: 180, el: avatarEl }); 
-                        hideouts.push({ left: aRect.left - 34, top: aRect.top + (aRect.height / 2) - 16, rotate: -90, el: avatarEl }); 
-                        hideouts.push({ left: aRect.right - 2, top: aRect.top + (aRect.height / 2) - 16, rotate: 90, el: avatarEl }); 
-                    }
-                }
-            }
-
-            // ================= 场景 2：AI Projects =================
-            else if (document.getElementById('view-ai-projects').classList.contains('active-view')) {
-                document.querySelectorAll('#view-ai-projects .try-btn').forEach(btn => {
-                    const bRect = getAbsoluteRect(btn);
-                    hideouts.push({ left: bRect.left + 15, top: bRect.bottom, rotate: 180, el: btn }); 
-                });
-            }
-
-            // ================= 场景 3：PPT Works 列表网格 =================
-            else if (document.getElementById('view-visual-decks').classList.contains('active-view')) {
-                document.querySelectorAll('#view-visual-decks .ppt-image-placeholder').forEach(box => {
-                    const bRect = getAbsoluteRect(box);
-                    if (bRect.width >= 36) {
-                        const randomOffsetTop = Math.random() * (bRect.width - 36);
-                        const randomOffsetBottom = Math.random() * (bRect.width - 36);
-
-                        hideouts.push({ left: bRect.left + randomOffsetTop, top: bRect.top - 32, rotate: 0, el: box }); 
-                        hideouts.push({ left: bRect.left + randomOffsetBottom, top: bRect.bottom, rotate: 180, el: box }); 
-                    }
-                });
-            }
-
-            // ================= 场景 4：PPT 作品集 - 详情展厅 =================
-            else if (document.getElementById('view-ppt-details').classList.contains('active-view')) {
+            // 如果 PPT 详情页显示中，优先在其上
+            if (document.getElementById('view-ppt-details').classList.contains('active-view')) {
                 document.querySelectorAll('#view-ppt-details .ppt-detail-block').forEach(block => {
                     const bRect = getAbsoluteRect(block);
                     if (bRect.width >= 36) {
-                        const randomOffsetTop = Math.random() * (bRect.width - 36);
-                        const randomOffsetBottom = Math.random() * (bRect.width - 36);
-
-                        hideouts.push({ left: bRect.left + randomOffsetTop, top: bRect.top - 32, rotate: 0, el: block }); 
-                        hideouts.push({ left: bRect.left + randomOffsetBottom, top: bRect.bottom, rotate: 180, el: block }); 
+                        const r1 = Math.random() * (bRect.width - 36);
+                        const r2 = Math.random() * (bRect.width - 36);
+                        hideouts.push({ left: bRect.left + r1, top: bRect.top - 32, rotate: 0, el: block });
+                        hideouts.push({ left: bRect.left + r2, top: bRect.bottom, rotate: 180, el: block });
                     }
                 });
             }
 
-            // ================= 场景 5：数字孪生专属占位页 =================
-            else if (document.getElementById('view-digital-twin').classList.contains('active-view')) {
+            // 如果数字孪生页面显示中
+            if (document.getElementById('view-digital-twin').classList.contains('active-view')) {
                 const block = document.querySelector('#view-digital-twin .ppt-detail-block');
-                if(block) {
+                if (block) {
                     const bRect = getAbsoluteRect(block);
-                    if(bRect.width >= 36) {
-                        const randomOffsetTop = Math.random() * (bRect.width - 36);
-                        hideouts.push({ left: bRect.left + randomOffsetTop, top: bRect.top - 32, rotate: 0, el: block }); 
-                        hideouts.push({ left: bRect.left + randomOffsetTop, top: bRect.bottom, rotate: 180, el: block }); 
+                    if (bRect.width >= 36) {
+                        const r = Math.random() * (bRect.width - 36);
+                        hideouts.push({ left: bRect.left + r, top: bRect.top - 32, rotate: 0, el: block });
+                        hideouts.push({ left: bRect.left + r, top: bRect.bottom, rotate: 180, el: block });
                     }
                 }
             }
 
-            // ================= 场景 6：留言地图 =================
-            else if (document.getElementById('view-guest-map').classList.contains('active-view')) {
-                const mapPanel = document.querySelector('.map-panel');
-                if (mapPanel) {
-                    const mRect = getAbsoluteRect(mapPanel);
-                    hideouts.push({ left: mRect.left + 20, top: mRect.top - 32, rotate: 0, el: mapPanel });
-                    hideouts.push({ left: mRect.right - 56, top: mRect.top - 32, rotate: 0, el: mapPanel });
-                }
-                document.querySelectorAll('#view-guest-map .submit-btn').forEach(btn => {
-                    const bRect = getAbsoluteRect(btn);
-                    hideouts.push({ left: bRect.left + 15, top: bRect.bottom, rotate: 180, el: btn });
-                });
+            // ===== 主页面各区域（始终可见，随机挑选） =====
+            // Overview 区域
+            const nameEl = document.querySelector('.name-section h1');
+            if (nameEl) {
+                const nRect = getAbsoluteRect(nameEl);
+                hideouts.push({ left: nRect.right - 36, top: nRect.top - 28, rotate: 0, el: nameEl });
+                hideouts.push({ left: nRect.left + 60, top: nRect.bottom - 4, rotate: 180, el: nameEl });
             }
+            const avatarEl = document.querySelector('.avatar-box');
+            if (avatarEl) {
+                const aRect = getAbsoluteRect(avatarEl);
+                hideouts.push({ left: aRect.left + (aRect.width / 2) - 18, top: aRect.top - 32, rotate: 0, el: avatarEl });
+                hideouts.push({ left: aRect.left + (aRect.width / 2) - 18, top: aRect.bottom, rotate: 180, el: avatarEl });
+                hideouts.push({ left: aRect.left - 34, top: aRect.top + (aRect.height / 2) - 16, rotate: -90, el: avatarEl });
+                hideouts.push({ left: aRect.right - 2, top: aRect.top + (aRect.height / 2) - 16, rotate: 90, el: avatarEl });
+            }
+
+            // AI Projects 区域
+            document.querySelectorAll('#view-ai-projects .try-btn').forEach(btn => {
+                const bRect = getAbsoluteRect(btn);
+                hideouts.push({ left: bRect.left + 15, top: bRect.bottom, rotate: 180, el: btn });
+            });
+
+            // PPT Works 区域
+            document.querySelectorAll('#view-visual-decks .ppt-image-placeholder').forEach(box => {
+                const bRect = getAbsoluteRect(box);
+                if (bRect.width >= 36) {
+                    hideouts.push({ left: bRect.left + Math.random() * (bRect.width - 36), top: bRect.top - 32, rotate: 0, el: box });
+                    hideouts.push({ left: bRect.left + Math.random() * (bRect.width - 36), top: bRect.bottom, rotate: 180, el: box });
+                }
+            });
+
+            // 留言地图区域
+            const mapPanel = document.querySelector('.map-panel');
+            if (mapPanel) {
+                const mRect = getAbsoluteRect(mapPanel);
+                hideouts.push({ left: mRect.left + 20, top: mRect.top - 32, rotate: 0, el: mapPanel });
+                hideouts.push({ left: mRect.right - 56, top: mRect.top - 32, rotate: 0, el: mapPanel });
+            }
+            document.querySelectorAll('#view-guest-map .submit-btn').forEach(btn => {
+                const bRect = getAbsoluteRect(btn);
+                hideouts.push({ left: bRect.left + 15, top: bRect.bottom, rotate: 180, el: btn });
+            });
 
             if (hideouts.length === 0) {
                 hideouts.push({ left: window.scrollX + 100, top: window.scrollY + 100, rotate: 0, el: null });
             }
 
             const targetPos = hideouts[Math.floor(Math.random() * hideouts.length)];
-            
+
             mascot.style.transition = '';
-            mascot.style.opacity = 1; 
+            mascot.style.opacity = 1;
             mascot.style.left = `${targetPos.left}px`;
             mascot.style.top = `${targetPos.top}px`;
             mascot.style.setProperty('--egg-rotate', `${targetPos.rotate}deg`);
-            
+
             currentRotation = targetPos.rotate;
-            attachedElement = targetPos.el; 
+            attachedElement = targetPos.el;
         }
 
         // --- 坠落引擎 ---
@@ -1522,20 +1652,18 @@
 
         function checkAdminHash() {
             if (window.location.hash === '#admin') {
-                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
                 document.getElementById('admin-section').classList.add('active');
-                document.getElementById('header-breadcrumb').innerText = 'Pages / Admin';
-                document.getElementById('header-title').innerText = '后台管理';
+                updateHeaderForSection('admin');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
         function hideAdmin() {
             document.getElementById('admin-section').classList.remove('active');
-            document.getElementById('view-guest-map').classList.add('active-view');
             document.getElementById('header-breadcrumb').innerText = pagesConfig['guest-map'].breadcrumb;
             document.getElementById('header-title').innerText = pagesConfig['guest-map'].title;
             window.location.hash = '';
+            scrollToSection('guest-map');
         }
 
         async function adminLogin() {
